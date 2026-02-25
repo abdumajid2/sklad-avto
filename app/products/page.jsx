@@ -7,22 +7,23 @@ import {
   useUpdateProductMutation,
   useDeleteProductMutation,
 } from "../../store/services/productsApi";
-import { useGetLogsByGoodQuery, useAddLogMutation } from "../../store/services/userApi";
+import {
+  useGetLogsByGoodQuery,
+  useAddLogMutation,
+} from "../../store/services/userApi";
 
 import {
-  CirclePlus,
   CircleUser,
   EllipsisVertical,
   FileText,
   MessageCircle,
   Mic,
-  OctagonMinus,
   PencilLine,
   Send,
   Trash2,
   PackagePlus,
-  PackageMinus,
   LogOut,
+  CirclePlus,
 } from "lucide-react";
 
 // ---------- helpers ----------
@@ -49,9 +50,9 @@ const makeIssueMessage = ({ product, qty, toPerson, fromPerson, comment }) => {
     `🕒 <i>${esc(dt)}</i>\n\n` +
     `📦 Товар: <b>${esc(product?.name)}</b>\n` +
     `🔖 Код: <b>${esc(product?.code)}</b>\n` +
-    `📍 Место: <b>Зона ${esc(product?.zona)} / Ряд ${esc(product?.ryad)} / Поз ${esc(
-      product?.pozisiya
-    )}</b>\n` +
+    `📍 Место: <b>Зона ${esc(product?.zona)} / Ряд ${esc(
+      product?.ryad
+    )} / Поз ${esc(product?.pozisiya)}</b>\n` +
     `➖ Кол-во: <b>${esc(qty)}</b>\n` +
     `👤 Брал: <b>${esc(toPerson)}</b>\n` +
     (fromPerson?.trim() ? `🧑‍💼 Выдал: <b>${esc(fromPerson)}</b>\n` : "") +
@@ -67,9 +68,9 @@ const makeReturnMessage = ({ product, qty, fromPerson, toPerson, comment }) => {
     `🕒 <i>${esc(dt)}</i>\n\n` +
     `📦 Товар: <b>${esc(product?.name)}</b>\n` +
     `🔖 Код: <b>${esc(product?.code)}</b>\n` +
-    `📍 Место: <b>Зона ${esc(product?.zona)} / Ряд ${esc(product?.ryad)} / Поз ${esc(
-      product?.pozisiya
-    )}</b>\n` +
+    `📍 Место: <b>Зона ${esc(product?.zona)} / Ряд ${esc(
+      product?.ryad
+    )} / Поз ${esc(product?.pozisiya)}</b>\n` +
     `➕ Кол-во: <b>${esc(qty)}</b>\n` +
     (fromPerson?.trim() ? `👤 Принял: <b>${esc(fromPerson)}</b>\n` : "") +
     (toPerson?.trim() ? `📦 От: <b>${esc(toPerson)}</b>\n` : "") +
@@ -82,8 +83,9 @@ const makeReturnMessage = ({ product, qty, fromPerson, toPerson, comment }) => {
 function TabBtn({ active, onClick, children }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`px-4 py-2 rounded-xl border transition ${
+      className={`px-4 py-2 rounded-xl border transition text-sm md:text-base ${
         active
           ? "bg-white text-black border-white"
           : "bg-white/10 text-white border-white/20 hover:bg-white/20"
@@ -135,7 +137,7 @@ export default function ProductsPage() {
   const [tab, setTab] = useState("history"); // history | issue | return
   const [logForm, setLogForm] = useState({
     fromPerson: "", // кто выдал / кто принял
-    toPerson: "",   // кто брал / от кого пришло
+    toPerson: "", // кто брал / от кого пришло
     qty: "1",
     comment: "",
   });
@@ -143,14 +145,19 @@ export default function ProductsPage() {
   const busy = isAdding || isUpdating || isDeleting;
 
   // logs for selected product
-  const { data: logs = [], isLoading: logsLoading } = useGetLogsByGoodQuery(actionProduct?.id, {
-    skip: !actionProduct,
-  });
+  const { data: logs = [], isLoading: logsLoading } = useGetLogsByGoodQuery(
+    actionProduct?.id,
+    {
+      skip: !actionProduct,
+    }
+  );
   const [addLog, { isLoading: logSaving }] = useAddLogMutation();
 
   // zones list
   const zones = useMemo(() => {
-    const set = new Set(data.map((p) => String(p.zona || "").trim()).filter(Boolean));
+    const set = new Set(
+      data.map((p) => String(p.zona || "").trim()).filter(Boolean)
+    );
     return ["ALL", ...Array.from(set)];
   }, [data]);
 
@@ -221,7 +228,8 @@ export default function ProductsPage() {
 
   const closeModal = () => setModalOpen(false);
 
-  const onChange = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const onChange = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const save = async () => {
     if (!form.name.trim()) return alert("Введите name");
@@ -260,20 +268,10 @@ export default function ProductsPage() {
     }
   };
 
-  const changeQty = async (p, delta) => {
-    const current = toNumberQty(p.quant);
-    const next = Math.max(0, current + delta);
-    try {
-      await updateProduct({ id: p.id, quant: toQtyString(next) }).unwrap();
-    } catch (e) {
-      console.error(e);
-      alert("Не удалось обновить количество");
-    }
-  };
-
   // ---------- voice search ----------
   const startVoice = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert("Голосовой поиск не поддерживается (нужен Chrome).");
@@ -340,7 +338,10 @@ export default function ProductsPage() {
 
       // 2) update product
       const next = Math.max(0, current - qty);
-      await updateProduct({ id: actionProduct.id, quant: toQtyString(next) }).unwrap();
+      await updateProduct({
+        id: actionProduct.id,
+        quant: toQtyString(next),
+      }).unwrap();
 
       // 3) telegram
       const msg = makeIssueMessage({
@@ -383,7 +384,10 @@ export default function ProductsPage() {
       // 2) update product (+qty)
       const current = toNumberQty(actionProduct.quant);
       const next = current + qty;
-      await updateProduct({ id: actionProduct.id, quant: toQtyString(next) }).unwrap();
+      await updateProduct({
+        id: actionProduct.id,
+        quant: toQtyString(next),
+      }).unwrap();
 
       // 3) telegram
       const msg = makeReturnMessage({
@@ -407,55 +411,62 @@ export default function ProductsPage() {
   if (isError) return <div className="p-6 text-white">Ошибка загрузки</div>;
 
   return (
-    <div className="text-white">
-      {/* Toolbar */}
-      <div className="flex flex-wrap gap-3 items-center justify-between mb-4">
-        <div className="flex gap-2 items-center w-full md:w-auto">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Поиск по коду или имени..."
-            className="w-full md:w-[250px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none placeholder:text-white/60"
-          />
+    <div className="text-white px-4 pb-24 md:pb-6">
+      {/* Sticky Toolbar (mobile friendly) */}
+      <div className="sticky top-0 z-40 bg-black/70 rounded-xl backdrop-blur-2xl border-b border-white/10 -mx-4 px-4 py-3 mb-4">
+        <div className="flex flex-wrap gap-3 items-center justify-between">
+          <div className="flex gap-2 items-center w-full md:w-auto">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Поиск по коду или имени..."
+              className="w-full md:w-[260px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none placeholder:text-white/60"
+            />
 
-          <button
-            onClick={startVoice}
-            className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition"
-            title="Голосовой поиск"
-            disabled={listening}
-          >
-            <Mic className={listening ? "animate-pulse" : ""} />
-          </button>
+            <button
+              type="button"
+              onClick={startVoice}
+              className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition"
+              title="Голосовой поиск"
+              disabled={listening}
+            >
+              <Mic className={listening ? "animate-pulse" : ""} />
+            </button>
 
-          <select
-            value={zona}
-            onChange={(e) => setZona(e.target.value)}
-            className="ml-2 px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none text-white"
-          >
-            {zones.map((z) => (
-              <option key={z} value={z} className="bg-gray-900 text-white">
-                {z === "ALL" ? "Все зоны" : `Зона ${z}`}
-              </option>
-            ))}
-          </select>
-        </div>
+            <select
+              value={zona}
+              onChange={(e) => setZona(e.target.value)}
+              className="ml-0 md:ml-2 px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none text-white w-full md:w-auto"
+            >
+              {zones.map((z) => (
+                <option key={z} value={z} className="bg-gray-900 text-white">
+                  {z === "ALL" ? "Все зоны" : `Зона ${z}`}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="flex gap-2 items-center">
-          {busy && <span className="text-sm opacity-70"> Сохраняю...</span>}
+          {/* Desktop actions */}
+          <div className="hidden md:flex gap-2 items-center">
+            {busy && <span className="text-sm opacity-70">Сохраняю...</span>}
 
-          <button
-            onClick={openAdd}
-            className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition"
-          >
-            + Добавить
-          </button>
+            <button
+              type="button"
+              onClick={openAdd}
+              className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition"
+            >
+              + Добавить
+            </button>
 
-          <button
-            onClick={logOut}
-            className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition"
-          >
-            <LogOut/>
-          </button>
+            <button
+              type="button"
+              onClick={logOut}
+              className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition flex items-center gap-2"
+            >
+              <LogOut size={18} />
+              Выйти
+            </button>
+          </div>
         </div>
       </div>
 
@@ -464,12 +475,31 @@ export default function ProductsPage() {
         {filtered.map((p) => (
           <div
             key={p.id}
-            className="p-4 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-between gap-4"
+            className="p-4 rounded-2xl bg-white/10 border border-white/20 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
           >
-            <div className="min-w-0 flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
-              <div className="font-semibold truncate">{p.name}</div>
+            <div className="min-w-0">
+              <div className="font-semibold truncate text-base md:text-lg">
+                {p.name}
+              </div>
 
-              <div className="text-sm opacity-80 flex flex-wrap gap-4 items-center">
+              {/* Mobile compact info */}
+              <div className="mt-2 md:hidden  grid grid-cols-2 gap-2 text-sm opacity-90">
+                <div>
+                  Code: <b className="opacity-100">{p.code}</b>
+                </div>
+                <div>
+                  Кол-во: <b className="opacity-100">{p.quant}</b>
+                </div>
+                <div>
+                  Zona: <b className="opacity-100">{p.zona}</b>
+                </div>
+                <div>
+                  {p.ryad}/{p.pozisiya}
+                </div>
+              </div>
+
+              {/* Desktop info */}
+              <div className="hidden md:flex text-sm opacity-80 flex-wrap gap-4 items-center mt-2">
                 <p>
                   Code: <span className="font-bold">{p.code}</span>
                 </p>
@@ -489,11 +519,8 @@ export default function ProductsPage() {
             </div>
 
             <div className="flex flex-wrap gap-2 justify-end">
-              
-
-              
-
               <button
+                type="button"
                 onClick={() => openEdit(p)}
                 className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
                 title="Редактировать"
@@ -502,6 +529,7 @@ export default function ProductsPage() {
               </button>
 
               <button
+                type="button"
                 onClick={() => remove(p)}
                 className="px-3 py-2 rounded-xl bg-red-500/30 border border-red-400/30 hover:bg-red-500/40"
                 title="Удалить"
@@ -510,6 +538,7 @@ export default function ProductsPage() {
               </button>
 
               <button
+                type="button"
                 onClick={() => openActionsModal(p)}
                 className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
                 title="История / Выдать / Приход"
@@ -523,14 +552,18 @@ export default function ProductsPage() {
 
       {/* Add/Edit Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={closeModal} />
-          <div className="relative w-full max-w-[520px] rounded-2xl bg-gray-900/70 border border-white/20 backdrop-blur-xl p-5">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={closeModal}
+          />
+          <div className="relative w-full max-w-[520px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto bg-gray-900/70 border border-white/20 backdrop-blur-xl p-5">
+            <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-900/40 backdrop-blur border-b border-white/10 py-3 -mx-5 px-5">
               <h2 className="text-lg font-semibold">
                 {mode === "add" ? "Добавить товар" : "Редактировать товар"}
               </h2>
               <button
+                type="button"
                 onClick={closeModal}
                 className="px-3 py-1 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
               >
@@ -594,8 +627,9 @@ export default function ProductsPage() {
               </Field>
             </div>
 
-            <div className="flex gap-2 justify-end mt-5">
+            <div className="flex gap-2 justify-end mt-6">
               <button
+                type="button"
                 onClick={closeModal}
                 className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
                 disabled={busy}
@@ -603,8 +637,9 @@ export default function ProductsPage() {
                 Отмена
               </button>
               <button
+                type="button"
                 onClick={save}
-                className="px-4 py-2 rounded-xl bg-white text-black hover:bg-gray-200"
+                className="px-4 py-2 rounded-xl bg-white text-black hover:bg-gray-200 font-semibold"
                 disabled={busy}
               >
                 {busy ? "..." : "Сохранить"}
@@ -616,18 +651,25 @@ export default function ProductsPage() {
 
       {/* Actions Modal (⋮) */}
       {actionModal && actionProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={closeActionsModal} />
-          <div className="relative w-full max-w-[720px] rounded-2xl bg-gray-900/70 border border-white/20 backdrop-blur-xl p-5 text-white">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-lg font-semibold">{actionProduct.name}</div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={closeActionsModal}
+          />
+          <div className="relative w-full max-w-[720px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto bg-gray-900/70 border border-white/20 backdrop-blur-xl p-5 text-white">
+            <div className="flex items-start md:items-center justify-between mb-3 sticky top-0 bg-gray-900/40 backdrop-blur border-b border-white/10 py-3 -mx-5 px-5">
+              <div className="min-w-0">
+                <div className="text-lg font-semibold truncate">
+                  {actionProduct.name}
+                </div>
                 <div className="text-sm opacity-80">
-                  code: <b>{actionProduct.code}</b> • остаток: <b>{actionProduct.quant}</b>
+                  code: <b>{actionProduct.code}</b> • остаток:{" "}
+                  <b>{actionProduct.quant}</b>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={closeActionsModal}
                 className="px-3 py-1 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
               >
@@ -635,8 +677,11 @@ export default function ProductsPage() {
               </button>
             </div>
 
-            <div className="flex gap-2 mb-4">
-              <TabBtn active={tab === "history"} onClick={() => setTab("history")}>
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <TabBtn
+                active={tab === "history"}
+                onClick={() => setTab("history")}
+              >
                 История
               </TabBtn>
 
@@ -644,35 +689,41 @@ export default function ProductsPage() {
                 Выдать
               </TabBtn>
 
-              <TabBtn active={tab === "return"} onClick={() => setTab("return")}>
+              <TabBtn
+                active={tab === "return"}
+                onClick={() => setTab("return")}
+              >
                 Приход
               </TabBtn>
             </div>
 
             {tab === "history" ? (
-              <div className="max-h-[360px] overflow-auto space-y-2">
+              <div className="max-h-[70dvh] md:max-h-[360px] overflow-auto space-y-2">
                 {logsLoading ? (
                   <div className="opacity-70">Загрузка...</div>
                 ) : logs.length === 0 ? (
                   <div className="opacity-70">История пустая</div>
                 ) : (
                   logs.map((l) => (
-                    <div key={l.id} className="p-3 rounded-xl bg-white/10 border border-white/20">
+                    <div
+                      key={l.id}
+                      className="p-3 rounded-xl bg-white/10 border border-white/20"
+                    >
                       <div className="flex justify-between gap-3">
                         <div className="font-semibold flex items-center gap-2">
                           {l.userJob === "ISSUE" ? (
                             <>
-                              <Send size={24} className="text-white/80" />
-                              <span className="text-red-500">Выдача</span>
+                              <Send size={22} className="text-white/80" />
+                              <span className="text-red-400">Выдача</span>
                             </>
                           ) : l.userJob === "RETURN" ? (
                             <>
-                              <PackagePlus size={24} className="text-white/80" />
-                              <span className="text-green-500">Приход</span>
+                              <PackagePlus size={22} className="text-white/80" />
+                              <span className="text-green-400">Приход</span>
                             </>
                           ) : (
                             <>
-                              <FileText size={28} className="text-white/80" />
+                              <FileText size={22} className="text-white/80" />
                               <span>Запись</span>
                             </>
                           )}
@@ -688,7 +739,7 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="text-sm flex gap-2 items-center opacity-90 mt-1">
-                        <CircleUser />
+                        <CircleUser size={18} />
 
                         {l.userJob === "RETURN" ? (
                           <>
@@ -731,7 +782,12 @@ export default function ProductsPage() {
                   <Field label="Кто выдал (не обязательно)">
                     <input
                       value={logForm.fromPerson}
-                      onChange={(e) => setLogForm((p) => ({ ...p, fromPerson: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({
+                          ...p,
+                          fromPerson: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       placeholder="Напр: Маджид"
                     />
@@ -740,7 +796,12 @@ export default function ProductsPage() {
                   <Field label="Кто брал (обязательно)">
                     <input
                       value={logForm.toPerson}
-                      onChange={(e) => setLogForm((p) => ({ ...p, toPerson: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({
+                          ...p,
+                          toPerson: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       placeholder="Напр: Али"
                     />
@@ -751,7 +812,9 @@ export default function ProductsPage() {
                   <Field label="Сколько (qty)">
                     <input
                       value={logForm.qty}
-                      onChange={(e) => setLogForm((p) => ({ ...p, qty: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({ ...p, qty: e.target.value }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       inputMode="decimal"
                     />
@@ -760,7 +823,12 @@ export default function ProductsPage() {
                   <Field label="Комментарий">
                     <input
                       value={logForm.comment}
-                      onChange={(e) => setLogForm((p) => ({ ...p, comment: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({
+                          ...p,
+                          comment: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       placeholder="Напр: для объекта №12"
                     />
@@ -769,9 +837,10 @@ export default function ProductsPage() {
 
                 <div className="flex justify-end mt-2">
                   <button
+                    type="button"
                     disabled={logSaving}
                     onClick={issue}
-                    className="px-4 py-2 rounded-xl bg-white text-black hover:bg-gray-200 flex items-center gap-2"
+                    className="px-4 py-3 md:py-2 rounded-xl bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2 font-semibold w-full md:w-auto"
                   >
                     <Send size={18} />
                     {logSaving ? "..." : "Выдать"}
@@ -784,7 +853,12 @@ export default function ProductsPage() {
                   <Field label="Кто принял (обязательно)">
                     <input
                       value={logForm.fromPerson}
-                      onChange={(e) => setLogForm((p) => ({ ...p, fromPerson: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({
+                          ...p,
+                          fromPerson: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       placeholder="Напр: Маджид"
                     />
@@ -793,7 +867,9 @@ export default function ProductsPage() {
                   <Field label="От кого (не обязательно)">
                     <input
                       value={logForm.toPerson}
-                      onChange={(e) => setLogForm((p) => ({ ...p, toPerson: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({ ...p, toPerson: e.target.value }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       placeholder="Поставщик / водитель"
                     />
@@ -804,7 +880,9 @@ export default function ProductsPage() {
                   <Field label="Сколько (qty)">
                     <input
                       value={logForm.qty}
-                      onChange={(e) => setLogForm((p) => ({ ...p, qty: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({ ...p, qty: e.target.value }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       inputMode="decimal"
                     />
@@ -813,7 +891,12 @@ export default function ProductsPage() {
                   <Field label="Комментарий">
                     <input
                       value={logForm.comment}
-                      onChange={(e) => setLogForm((p) => ({ ...p, comment: e.target.value }))}
+                      onChange={(e) =>
+                        setLogForm((p) => ({
+                          ...p,
+                          comment: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
                       placeholder="Напр: накладная №..."
                     />
@@ -822,9 +905,10 @@ export default function ProductsPage() {
 
                 <div className="flex justify-end mt-2">
                   <button
+                    type="button"
                     disabled={logSaving}
                     onClick={receive}
-                    className="px-4 py-2 rounded-xl bg-white text-black hover:bg-gray-200 flex items-center gap-2"
+                    className="px-4 py-3 md:py-2 rounded-xl bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2 font-semibold w-full md:w-auto"
                   >
                     <CirclePlus size={18} />
                     {logSaving ? "..." : "Приход"}
@@ -835,6 +919,42 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+
+      {/* Bottom bar (mobile only) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-black/70 backdrop-blur-xl border-t border-white/10 px-4 py-3">
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={openAdd}
+            className="py-3 rounded-xl bg-white text-black font-semibold"
+          >
+            + Товар
+          </button>
+
+          <button
+            type="button"
+            onClick={startVoice}
+            disabled={listening}
+            className="py-3 rounded-xl bg-white/10 border border-white/20"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Mic className={listening ? "animate-pulse" : ""} />
+              Голос
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={logOut}
+            className="py-3 rounded-xl bg-white/10 border border-white/20"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <LogOut size={18} />
+              Выйти
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
