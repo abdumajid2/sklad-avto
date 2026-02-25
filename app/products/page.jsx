@@ -22,6 +22,7 @@ import {
   Trash2,
   PackagePlus,
   PackageMinus,
+  LogOut,
 } from "lucide-react";
 
 // ---------- helpers ----------
@@ -166,6 +167,15 @@ export default function ProductsPage() {
         );
       });
   }, [data, q, zona]);
+
+  const logOut = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+  };
 
   // telegram notify
   const tgNotify = async (text, chatId) => {
@@ -431,13 +441,20 @@ export default function ProductsPage() {
         </div>
 
         <div className="flex gap-2 items-center">
-          {busy && <span className="text-sm opacity-70">Сохраняю...</span>}
+          {busy && <span className="text-sm opacity-70"> Сохраняю...</span>}
 
           <button
             onClick={openAdd}
             className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition"
           >
             + Добавить
+          </button>
+
+          <button
+            onClick={logOut}
+            className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition"
+          >
+            <LogOut/>
           </button>
         </div>
       </div>
@@ -472,21 +489,9 @@ export default function ProductsPage() {
             </div>
 
             <div className="flex flex-wrap gap-2 justify-end">
-              <button
-                onClick={() => changeQty(p, -1)}
-                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
-                title="-1"
-              >
-                <OctagonMinus />
-              </button>
+              
 
-              <button
-                onClick={() => changeQty(p, +1)}
-                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
-                title="+1"
-              >
-                <CirclePlus />
-              </button>
+              
 
               <button
                 onClick={() => openEdit(p)}
@@ -657,17 +662,17 @@ export default function ProductsPage() {
                         <div className="font-semibold flex items-center gap-2">
                           {l.userJob === "ISSUE" ? (
                             <>
-                              <PackageMinus size={18} className="text-white/80" />
-                              <span>Выдача</span>
+                              <Send size={24} className="text-white/80" />
+                              <span className="text-red-500">Выдача</span>
                             </>
                           ) : l.userJob === "RETURN" ? (
                             <>
-                              <PackagePlus size={18} className="text-white/80" />
-                              <span>Приход</span>
+                              <PackagePlus size={24} className="text-white/80" />
+                              <span className="text-green-500">Приход</span>
                             </>
                           ) : (
                             <>
-                              <FileText size={18} className="text-white/80" />
+                              <FileText size={28} className="text-white/80" />
                               <span>Запись</span>
                             </>
                           )}
