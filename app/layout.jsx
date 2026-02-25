@@ -1,6 +1,7 @@
 import "./globals.css";
 import Footer from "../components/Footer";
 import Providers from "./providers";
+import AuthGuard from "../components/AuthGuard";
 
 export const metadata = {
   title: "Warehouse App",
@@ -33,7 +34,12 @@ export default function RootLayout({ children }) {
 
             <main className="flex-1 overflow-auto p-6">
 
-              <Providers>{children}</Providers>
+              <Providers>
+                <AuthGuard>
+
+                {children}
+                </AuthGuard>
+                </Providers>
             </main>
 
             <Footer />

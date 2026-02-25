@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
@@ -13,18 +17,21 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, username")
+      .eq("username", "imcontrade")
+      .eq("password", password)
+      .maybeSingle();
 
     setLoading(false);
 
-    if (res.ok) {
-      window.location.href = "/products";
+    console.log("data:", data, "error:", error);
+
+    if (data && !error) {
+      localStorage.setItem("session", "ok");
+      router.push("/products");
     } else {
-      // неверный пароль — дернуть input (shake)
       setShake(true);
       setTimeout(() => setShake(false), 600);
     }
@@ -43,6 +50,7 @@ export default function LoginPage() {
 
         <label className="grid gap-2 mb-4">
           <span className="text-sm opacity-80">Пароль</span>
+
           <div className="relative">
             <input
               value={password}
@@ -53,6 +61,7 @@ export default function LoginPage() {
               }`}
               placeholder="••••••••"
             />
+
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
