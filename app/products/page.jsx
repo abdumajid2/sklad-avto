@@ -475,7 +475,7 @@ export default function ProductsPage() {
         {filtered.map((p) => (
           <div
             key={p.id}
-            className="p-4 rounded-2xl w-80 md:w-400  mx-auto bg-white/10 border border-white/20 flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3"
+            className="p-4 rounded-2xl w-80 md:w-300  mx-auto bg-white/10 border border-white/20 flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3"
           >
             <div className="min-w-0">
               <div className="font-semibold truncate text-base md:text-lg">
