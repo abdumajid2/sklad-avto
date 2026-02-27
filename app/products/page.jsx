@@ -85,10 +85,10 @@ function TabBtn({ active, onClick, children }) {
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-2 rounded-xl border transition text-sm md:text-base ${
+      className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm md:text-base ${
         active
-          ? "bg-white text-black border-white"
-          : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+          ? "bg-primary-600 text-white shadow-md"
+          : "bg-neutral-800 text-neutral-300 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-700"
       }`}
     >
       {children}
@@ -98,8 +98,8 @@ function TabBtn({ active, onClick, children }) {
 
 function Field({ label, children }) {
   return (
-    <label className="grid gap-1">
-      <span className="text-sm opacity-80">{label}</span>
+    <label className="form-group">
+      <span className="form-label">{label}</span>
       {children}
     </label>
   );

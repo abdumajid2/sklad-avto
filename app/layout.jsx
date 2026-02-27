@@ -1,4 +1,5 @@
 import "./globals.css";
+import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Providers from "./providers";
 import AuthGuard from "../components/AuthGuard";
@@ -11,41 +12,35 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ru">
-      <body className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
+      <body className=" bg-linear-to-br from-neutral-900 via-neutral-850 to-neutral-900 p-4">
+        <Providers>
+          <AuthGuard>
+            {/* Main container */}
+            <div className="relative w-full max-w-800 mx-auto min-h-[calc(100dvh-32px)] h-[calc(100dvh-32px)] rounded-2xl overflow-hidden shadow-2xl">
+              
+              {/* Background image */}
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: "url('/bgs.jpg')" }}
+              />
 
-        {/* Карточка (внутри будут Header/Main/Footer) */}
-        <div className="relative w-full max-w-[1600px] h-[800px] rounded-2xl overflow-hidden shadow-2xl">
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-linear-to-br from-black/50 via-black/40 to-black/50" />
 
-          {/* Фон картинка */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/bgs.jpg')" }}
-          />
+              {/* Blur effect */}
+              <div className="absolute inset-0 backdrop-blur-sm" />
 
-          {/* Затемнение */}
-          <div className="absolute inset-0 bg-black/40" />
-
-          {/* Размытие */}
-          <div className="absolute inset-0 backdrop-blur-md" />
-
-          {/* Контент */}
-          <div className="relative z-10 h-full flex flex-col text-white">
-          
-
-            <main className="flex-1 overflow-auto p-6">
-
-              <Providers>
-                <AuthGuard>
-
-                {children}
-                </AuthGuard>
-                </Providers>
-            </main>
-
-            <Footer />
-          </div>
-
-        </div>
+              {/* Content wrapper */}
+              <div className="relative z-10 flex flex-col h-full">
+                <Header />
+                <main className="flex-1  overflow-auto px-3 md:px-6 py-4">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </div>
+          </AuthGuard>
+        </Providers>
       </body>
     </html>
   );

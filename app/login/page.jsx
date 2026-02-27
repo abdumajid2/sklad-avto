@@ -38,47 +38,57 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-900 p-4">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-[420px] rounded-2xl border border-white/15 bg-white/5 backdrop-blur-xl p-6"
+        className="w-full max-w-md glass-elevated p-8 space-y-6"
       >
-        <h1 className="text-xl font-semibold mb-2">Вход</h1>
-        <p className="text-sm opacity-70 mb-5">
-          Введите пароль, чтобы открыть склад
-        </p>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Вход в систему</h1>
+          <p className="text-neutral-400">
+            Введите пароль для доступа к складу
+          </p>
+        </div>
 
-        <label className="grid gap-2 mb-4">
-          <span className="text-sm opacity-80">Пароль</span>
+        <div className="form-group">
+          <label htmlFor="password" className="form-label">
+            Пароль
+          </label>
 
           <div className="relative">
             <input
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type={showPassword ? "text" : "password"}
-              className={`w-full px-3 py-3 rounded-xl bg-white/10 border border-white/20 outline-none pr-12 ${
-                shake ? "ring-2 ring-red-500 shake" : ""
-              }`}
-              placeholder="••••••••"
+              className={`input pr-12 ${shake ? "input-error shake" : ""}`}
+              placeholder="Введите пароль"
+              disabled={loading}
             />
 
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-200 transition-colors disabled:opacity-50"
               aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+              disabled={loading}
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-        </label>
+        </div>
 
         <button
+          type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-200 disabled:opacity-60"
+          className="btn-primary btn-lg w-full"
         >
-          {loading ? "..." : "Войти"}
+          {loading ? "Вход..." : "Войти"}
         </button>
+
+        <p className="text-center text-xs text-neutral-500">
+          Защищённая система доступа
+        </p>
       </form>
     </div>
   );
