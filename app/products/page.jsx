@@ -411,16 +411,16 @@ export default function ProductsPage() {
   if (isError) return <div className="p-6 text-white">Ошибка загрузки</div>;
 
   return (
-    <div className="text-white px-4 pb-24 md:pb-6">
+    <div className="text-white  px-4 pb-24 md:pb-6">
       {/* Sticky Toolbar (mobile friendly) */}
-      <div className="sticky top-0 z-40 bg-black/70 rounded-xl backdrop-blur-2xl border-b border-white/10 -mx-4 px-4 py-3 mb-4">
-        <div className="flex flex-wrap gap-3 items-center justify-between">
+      <div className="sticky top-0 z-40 bg-black/70 rounded-xl backdrop-blur-2xl  border-b border-white/10  px-4 py-3  mb-4 md:max-w-800 mx-auto">
+        <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex gap-2 items-center w-full md:w-auto">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Поиск по коду или имени..."
-              className="w-full md:w-[260px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none placeholder:text-white/60"
+              className="w-full  px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none placeholder:text-white/60"
             />
 
             <button
@@ -447,7 +447,7 @@ export default function ProductsPage() {
           </div>
 
           {/* Desktop actions */}
-          <div className="hidden md:flex gap-2 items-center">
+          <div className="hidden md:flex  gap-2 items-center">
             {busy && <span className="text-sm opacity-70">Сохраняю...</span>}
 
             <button
@@ -471,11 +471,11 @@ export default function ProductsPage() {
       </div>
 
       {/* List */}
-      <div className="grid gap-3">
+      <div className="grid  gap-6 items-center justify-center">
         {filtered.map((p) => (
           <div
             key={p.id}
-            className="p-4 rounded-2xl bg-white/10 border border-white/20 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+            className="p-4 rounded-2xl w-80 md:w-450  mx-auto bg-white/10 border border-white/20 flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3"
           >
             <div className="min-w-0">
               <div className="font-semibold truncate text-base md:text-lg">
@@ -483,7 +483,7 @@ export default function ProductsPage() {
               </div>
 
               {/* Mobile compact info */}
-              <div className="mt-2 md:hidden  grid grid-cols-2 gap-2 text-sm opacity-90">
+              <div className="mt-2 md:hidden grid grid-cols-2 gap-2 text-sm opacity-90">
                 <div>
                   Code: <b className="opacity-100">{p.code}</b>
                 </div>
@@ -499,7 +499,7 @@ export default function ProductsPage() {
               </div>
 
               {/* Desktop info */}
-              <div className="hidden md:flex text-sm opacity-80 flex-wrap gap-4 items-center mt-2">
+              <div className="hidden md:flex  text-sm opacity-80 flex-wrap gap-4 items-center mt-2">
                 <p>
                   Code: <span className="font-bold">{p.code}</span>
                 </p>
@@ -513,7 +513,7 @@ export default function ProductsPage() {
                   Poz: <span className="font-bold">{p.pozisiya}</span>
                 </p>
                 <p>
-                  Кол-во: <span className="font-bold">{p.quant}</span>
+                  Кол-во: <span className="font-bold text-2xl text-white">{p.quant}</span>
                 </p>
               </div>
             </div>
