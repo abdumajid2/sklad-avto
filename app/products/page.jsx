@@ -31,6 +31,7 @@ function toNumberQty(v) {
   const n = Number(String(v ?? "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
 }
+
 function toQtyString(n) {
   const safe = Number.isFinite(n) ? n : 0;
   return safe.toFixed(2);
@@ -79,7 +80,7 @@ const makeReturnMessage = ({ product, qty, fromPerson, toPerson, comment }) => {
   );
 };
 
-// ---------- ui helpers ----------
+// ---------- UI small components ----------
 function TabBtn({ active, onClick, children }) {
   return (
     <button
@@ -88,7 +89,7 @@ function TabBtn({ active, onClick, children }) {
       className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm md:text-base ${
         active
           ? "bg-primary-600 text-white shadow-md"
-          : "bg-neutral-800 text-neutral-300 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-700"
+          : "bg-white border border-black/10 text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
       }`}
     >
       {children}
@@ -98,8 +99,10 @@ function TabBtn({ active, onClick, children }) {
 
 function Field({ label, children }) {
   return (
-    <label className="form-group">
-      <span className="form-label">{label}</span>
+    <label className="grid gap-2">
+      <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -136,15 +139,14 @@ export default function ProductsPage() {
   const [actionProduct, setActionProduct] = useState(null);
   const [tab, setTab] = useState("history"); // history | issue | return
   const [logForm, setLogForm] = useState({
-    fromPerson: "", // кто выдал / кто принял
-    toPerson: "", // кто брал / от кого пришло
+    fromPerson: "",
+    toPerson: "",
     qty: "1",
     comment: "",
   });
 
   const busy = isAdding || isUpdating || isDeleting;
 
-  // logs for selected product
   const { data: logs = [], isLoading: logsLoading } = useGetLogsByGoodQuery(
     actionProduct?.id,
     {
@@ -152,6 +154,19 @@ export default function ProductsPage() {
     }
   );
   const [addLog, { isLoading: logSaving }] = useAddLogMutation();
+
+  // ---------- reusable theme classes ----------
+  const pageText = "text-neutral-900 dark:text-white";
+  const panelClass =
+    "border transition-colors bg-white/90 border-black/10 text-neutral-900 dark:bg-white/10 dark:border-white/20 dark:text-white";
+  const inputClass =
+    "w-full px-3 py-2 rounded-xl outline-none transition-colors bg-white border border-black/10 text-neutral-900 placeholder:text-neutral-500 dark:bg-white/10 dark:border-white/20 dark:text-white dark:placeholder:text-white/60";
+  const ghostBtnClass =
+    "px-3 py-2 rounded-xl border transition bg-white border-black/10 hover:bg-neutral-100 text-neutral-900 dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20 dark:text-white";
+  const modalClass =
+    "relative w-full backdrop-blur-xl border bg-white/95 border-black/10 text-neutral-900 dark:bg-gray-900/70 dark:border-white/20 dark:text-white";
+  const stickyHeadClass =
+    "sticky top-0 backdrop-blur border-b py-3 -mx-5 px-5 bg-white/80 border-black/10 dark:bg-gray-900/40 dark:border-white/10";
 
   // zones list
   const zones = useMemo(() => {
@@ -184,7 +199,6 @@ export default function ProductsPage() {
     }
   };
 
-  // telegram notify
   const tgNotify = async (text, chatId) => {
     try {
       await fetch("/api/telegram/notify", {
@@ -241,7 +255,9 @@ export default function ProductsPage() {
       zona: String(form.zona ?? "").trim(),
       ryad: String(form.ryad ?? "").trim(),
       pozisiya: String(form.pozisiya ?? "").trim(),
-      quant: Number(String(form.quant ?? "0").replace(",", ".") || 0).toFixed(2),
+      quant: Number(String(form.quant ?? "0").replace(",", ".") || 0).toFixed(
+        2
+      ),
     };
 
     try {
@@ -299,7 +315,7 @@ export default function ProductsPage() {
     rec.onend = () => setListening(false);
   };
 
-  // ---------- actions modal (⋮) ----------
+  // ---------- actions modal ----------
   const openActionsModal = (p) => {
     setActionProduct(p);
     setTab("history");
@@ -312,7 +328,7 @@ export default function ProductsPage() {
     setActionProduct(null);
   };
 
-  // ---------- ISSUE (выдача) ----------
+  // ---------- ISSUE ----------
   const issue = async () => {
     if (!actionProduct) return;
 
@@ -324,7 +340,6 @@ export default function ProductsPage() {
     if (qty > current) return alert(`На складе только ${current}`);
 
     try {
-      // 1) log
       await addLog({
         goodId: String(actionProduct.id),
         data: new Date().toISOString(),
@@ -336,14 +351,12 @@ export default function ProductsPage() {
         userJob: "ISSUE",
       }).unwrap();
 
-      // 2) update product
       const next = Math.max(0, current - qty);
       await updateProduct({
         id: actionProduct.id,
         quant: toQtyString(next),
       }).unwrap();
 
-      // 3) telegram
       const msg = makeIssueMessage({
         product: actionProduct,
         qty,
@@ -360,7 +373,7 @@ export default function ProductsPage() {
     }
   };
 
-  // ---------- RETURN (приход) ----------
+  // ---------- RETURN ----------
   const receive = async () => {
     if (!actionProduct) return;
 
@@ -369,19 +382,17 @@ export default function ProductsPage() {
     if (!logForm.fromPerson.trim()) return alert("Напиши кто принял приход");
 
     try {
-      // 1) log
       await addLog({
         goodId: String(actionProduct.id),
         data: new Date().toISOString(),
         qty: String(qty),
         comment: logForm.comment || "",
-        fromPerson: logForm.fromPerson.trim(), // кто принял
-        toPerson: (logForm.toPerson || "").trim(), // от кого (можно пусто)
+        fromPerson: logForm.fromPerson.trim(),
+        toPerson: (logForm.toPerson || "").trim(),
         userName: logForm.fromPerson.trim(),
         userJob: "RETURN",
       }).unwrap();
 
-      // 2) update product (+qty)
       const current = toNumberQty(actionProduct.quant);
       const next = current + qty;
       await updateProduct({
@@ -389,7 +400,6 @@ export default function ProductsPage() {
         quant: toQtyString(next),
       }).unwrap();
 
-      // 3) telegram
       const msg = makeReturnMessage({
         product: actionProduct,
         qty,
@@ -406,27 +416,43 @@ export default function ProductsPage() {
     }
   };
 
-  // ---------- render ----------
-  if (isLoading) return <div className="p-6 text-white">Загрузка...</div>;
-  if (isError) return <div className="p-6 text-white">Ошибка загрузки</div>;
+  if (isLoading) {
+    return (
+      <div className={`p-6 ${pageText}`}>
+        Загрузка...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className={`p-6 ${pageText}`}>
+        Ошибка загрузки
+      </div>
+    );
+  }
 
   return (
-    <div className="text-white  px-4 pb-24 md:pb-6">
-      {/* Sticky Toolbar (mobile friendly) */}
-      <div className="sticky top-0 z-40 bg-black/70 rounded-xl backdrop-blur-2xl  border-b border-white/10  px-4 py-3  mb-4 md:max-w-800 mx-auto">
+    <div className={`px-4 pb-24 md:pb-6 transition-colors ${pageText}`}>
+      {/* Sticky Toolbar */}
+      <div
+        className="sticky top-0 z-40 rounded-xl backdrop-blur-2xl px-4 py-3 mb-4 md:max-w-800 mx-auto border
+        bg-white/80 border-black/10
+        dark:bg-black/70 dark:border-white/10"
+      >
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex gap-2 items-center w-full md:w-auto">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Поиск по коду или имени..."
-              className="w-full  px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none placeholder:text-white/60"
+              className={inputClass}
             />
 
             <button
               type="button"
               onClick={startVoice}
-              className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition"
+              className={ghostBtnClass}
               title="Голосовой поиск"
               disabled={listening}
             >
@@ -436,24 +462,31 @@ export default function ProductsPage() {
             <select
               value={zona}
               onChange={(e) => setZona(e.target.value)}
-              className="ml-0 md:ml-2 px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none text-white w-full md:w-auto"
+              className={`${inputClass} ml-0 md:ml-2 w-full md:w-auto`}
             >
               {zones.map((z) => (
-                <option key={z} value={z} className="bg-gray-900 text-white">
+                <option
+                  key={z}
+                  value={z}
+                  className="bg-white text-neutral-900 dark:bg-gray-900 dark:text-white"
+                >
                   {z === "ALL" ? "Все зоны" : `Зона ${z}`}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Desktop actions */}
-          <div className="hidden md:flex  gap-2 items-center">
-            {busy && <span className="text-sm opacity-70">Сохраняю...</span>}
+          <div className="hidden md:flex gap-2 items-center">
+            {busy && (
+              <span className="text-sm text-neutral-600 dark:text-white/70">
+                Сохраняю...
+              </span>
+            )}
 
             <button
               type="button"
               onClick={openAdd}
-              className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition"
+              className="px-4 py-2 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition"
             >
               + Добавить
             </button>
@@ -461,21 +494,23 @@ export default function ProductsPage() {
             <button
               type="button"
               onClick={logOut}
-              className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition flex items-center gap-2"
+              className={ghostBtnClass}
             >
-              <LogOut size={18} />
-              Выйти
+              <span className="flex items-center gap-2">
+                <LogOut size={18} />
+                Выйти
+              </span>
             </button>
           </div>
         </div>
       </div>
 
       {/* List */}
-      <div className="grid  gap-6 items-center justify-center">
+      <div className="grid gap-6 items-center justify-center">
         {filtered.map((p) => (
           <div
             key={p.id}
-            className="p-4 rounded-2xl w-80 md:w-full  mx-auto bg-white/10 border border-white/20 flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3"
+            className={`p-4 rounded-2xl w-80 md:w-440 mx-auto flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3 ${panelClass}`}
           >
             <div className="min-w-0">
               <div className="font-semibold truncate text-base md:text-lg">
@@ -483,15 +518,16 @@ export default function ProductsPage() {
               </div>
 
               {/* Mobile compact info */}
-              <div className="mt-2 md:hidden grid grid-cols-2 gap-2 text-sm opacity-90">
+              <div className="mt-2 md:hidden grid grid-cols-2 gap-2 text-sm text-neutral-700 dark:text-white/90">
                 <div>
-                  Code: <b className="opacity-100">{p.code}</b>
+                  Code: <b className="text-neutral-900 dark:text-white">{p.code}</b>
                 </div>
                 <div>
-                  Кол-во: <b className="opacity-100">{p.quant}</b>
+                  Кол-во:{" "}
+                  <b className="text-neutral-900 dark:text-white">{p.quant}</b>
                 </div>
                 <div>
-                  Zona: <b className="opacity-100">{p.zona}</b>
+                  Zona: <b className="text-neutral-900 dark:text-white">{p.zona}</b>
                 </div>
                 <div>
                   {p.ryad}/{p.pozisiya}
@@ -499,21 +535,24 @@ export default function ProductsPage() {
               </div>
 
               {/* Desktop info */}
-              <div className="hidden md:flex  text-sm opacity-80 flex-wrap gap-4 items-center mt-2">
+              <div className="hidden md:flex text-sm flex-wrap gap-4 items-center mt-2 text-neutral-600 dark:text-white/80">
                 <p>
-                  Code: <span className="font-bold">{p.code}</span>
+                  Code: <span className="font-bold text-neutral-900 dark:text-white">{p.code}</span>
                 </p>
                 <p>
-                  Zona: <span className="font-bold">{p.zona}</span>
+                  Zona: <span className="font-bold text-neutral-900 dark:text-white">{p.zona}</span>
                 </p>
                 <p>
-                  Ryad: <span className="font-bold">{p.ryad}</span>
+                  Ryad: <span className="font-bold text-neutral-900 dark:text-white">{p.ryad}</span>
                 </p>
                 <p>
-                  Poz: <span className="font-bold">{p.pozisiya}</span>
+                  Poz: <span className="font-bold text-neutral-900 dark:text-white">{p.pozisiya}</span>
                 </p>
                 <p>
-                  Кол-во: <span className="font-bold text-2xl text-white">{p.quant}</span>
+                  Кол-во:{" "}
+                  <span className="font-bold text-2xl text-neutral-900 dark:text-white">
+                    {p.quant}
+                  </span>
                 </p>
               </div>
             </div>
@@ -522,7 +561,7 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={() => openEdit(p)}
-                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
+                className={ghostBtnClass}
                 title="Редактировать"
               >
                 <PencilLine />
@@ -531,7 +570,7 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={() => remove(p)}
-                className="px-3 py-2 rounded-xl bg-red-500/30 border border-red-400/30 hover:bg-red-500/40"
+                className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 hover:bg-red-500/15 dark:bg-red-500/30 dark:border-red-400/30 dark:text-red-200 dark:hover:bg-red-500/40"
                 title="Удалить"
               >
                 <Trash2 />
@@ -540,7 +579,7 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={() => openActionsModal(p)}
-                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
+                className={ghostBtnClass}
                 title="История / Выдать / Приход"
               >
                 <EllipsisVertical />
@@ -553,19 +592,18 @@ export default function ProductsPage() {
       {/* Add/Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={closeModal} />
           <div
-            className="absolute inset-0 bg-black/60"
-            onClick={closeModal}
-          />
-          <div className="relative w-full max-w-[520px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto bg-gray-900/70 border border-white/20 backdrop-blur-xl p-5">
-            <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-900/40 backdrop-blur border-b border-white/10 py-3 -mx-5 px-5">
+            className={`${modalClass} max-w-[520px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto p-5`}
+          >
+            <div className={`flex items-center justify-between mb-4 ${stickyHeadClass}`}>
               <h2 className="text-lg font-semibold">
                 {mode === "add" ? "Добавить товар" : "Редактировать товар"}
               </h2>
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-3 py-1 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
+                className={ghostBtnClass}
               >
                 ✕
               </button>
@@ -576,7 +614,7 @@ export default function ProductsPage() {
                 <input
                   value={form.name}
                   onChange={(e) => onChange("name", e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                  className={inputClass}
                 />
               </Field>
 
@@ -584,7 +622,7 @@ export default function ProductsPage() {
                 <input
                   value={form.code}
                   onChange={(e) => onChange("code", e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                  className={inputClass}
                 />
               </Field>
 
@@ -593,7 +631,7 @@ export default function ProductsPage() {
                   <input
                     value={form.zona}
                     onChange={(e) => onChange("zona", e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                    className={inputClass}
                     placeholder="A / B / C / D"
                   />
                 </Field>
@@ -602,7 +640,7 @@ export default function ProductsPage() {
                   <input
                     value={form.ryad}
                     onChange={(e) => onChange("ryad", e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                    className={inputClass}
                     placeholder="1..9"
                   />
                 </Field>
@@ -612,7 +650,7 @@ export default function ProductsPage() {
                 <input
                   value={form.pozisiya}
                   onChange={(e) => onChange("pozisiya", e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                  className={inputClass}
                   placeholder="1..4"
                 />
               </Field>
@@ -621,7 +659,7 @@ export default function ProductsPage() {
                 <input
                   value={form.quant}
                   onChange={(e) => onChange("quant", e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                  className={inputClass}
                   inputMode="decimal"
                 />
               </Field>
@@ -631,7 +669,7 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
+                className={ghostBtnClass}
                 disabled={busy}
               >
                 Отмена
@@ -639,7 +677,7 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={save}
-                className="px-4 py-2 rounded-xl bg-white text-black hover:bg-gray-200 font-semibold"
+                className="px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 font-semibold"
                 disabled={busy}
               >
                 {busy ? "..." : "Сохранить"}
@@ -649,29 +687,31 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Actions Modal (⋮) */}
+      {/* Actions Modal */}
       {actionModal && actionProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
           <div
             className="absolute inset-0 bg-black/60"
             onClick={closeActionsModal}
           />
-          <div className="relative w-full max-w-[720px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto bg-gray-900/70 border border-white/20 backdrop-blur-xl p-5 text-white">
-            <div className="flex items-start md:items-center justify-between mb-3 sticky top-0 bg-gray-900/40 backdrop-blur border-b border-white/10 py-3 -mx-5 px-5">
+          <div
+            className={`${modalClass} max-w-[720px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto p-5`}
+          >
+            <div className={`flex items-start md:items-center justify-between mb-3 ${stickyHeadClass}`}>
               <div className="min-w-0">
                 <div className="text-lg font-semibold truncate">
                   {actionProduct.name}
                 </div>
-                <div className="text-sm opacity-80">
-                  code: <b>{actionProduct.code}</b> • остаток:{" "}
-                  <b>{actionProduct.quant}</b>
+                <div className="text-sm text-neutral-600 dark:text-white/80">
+                  code: <b className="text-neutral-900 dark:text-white">{actionProduct.code}</b> • остаток:{" "}
+                  <b className="text-neutral-900 dark:text-white">{actionProduct.quant}</b>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={closeActionsModal}
-                className="px-3 py-1 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20"
+                className={ghostBtnClass}
               >
                 ✕
               </button>
@@ -700,45 +740,49 @@ export default function ProductsPage() {
             {tab === "history" ? (
               <div className="max-h-[70dvh] md:max-h-[360px] overflow-auto space-y-2">
                 {logsLoading ? (
-                  <div className="opacity-70">Загрузка...</div>
+                  <div className="text-neutral-600 dark:text-white/70">
+                    Загрузка...
+                  </div>
                 ) : logs.length === 0 ? (
-                  <div className="opacity-70">История пустая</div>
+                  <div className="text-neutral-600 dark:text-white/70">
+                    История пустая
+                  </div>
                 ) : (
                   logs.map((l) => (
                     <div
                       key={l.id}
-                      className="p-3 rounded-xl bg-white/10 border border-white/20"
+                      className="p-3 rounded-xl border bg-white/80 border-black/10 dark:bg-white/10 dark:border-white/20"
                     >
                       <div className="flex justify-between gap-3">
                         <div className="font-semibold flex items-center gap-2">
                           {l.userJob === "ISSUE" ? (
                             <>
-                              <Send size={22} className="text-white/80" />
-                              <span className="text-red-400">Выдача</span>
+                              <Send size={22} className="text-neutral-500 dark:text-white/80" />
+                              <span className="text-red-500 dark:text-red-400">Выдача</span>
                             </>
                           ) : l.userJob === "RETURN" ? (
                             <>
-                              <PackagePlus size={22} className="text-white/80" />
-                              <span className="text-green-400">Приход</span>
+                              <PackagePlus size={22} className="text-neutral-500 dark:text-white/80" />
+                              <span className="text-green-600 dark:text-green-400">Приход</span>
                             </>
                           ) : (
                             <>
-                              <FileText size={22} className="text-white/80" />
+                              <FileText size={22} className="text-neutral-500 dark:text-white/80" />
                               <span>Запись</span>
                             </>
                           )}
                         </div>
 
-                        <div className="text-sm opacity-70">
+                        <div className="text-sm text-neutral-500 dark:text-white/70">
                           {l.data ? new Date(l.data).toLocaleString() : ""}
                         </div>
                       </div>
 
-                      <div className="mt-1 text-sm opacity-90">
+                      <div className="mt-1 text-sm text-neutral-700 dark:text-white/90">
                         Кол-во: <b>{l.qty}</b>
                       </div>
 
-                      <div className="text-sm flex gap-2 items-center opacity-90 mt-1">
+                      <div className="text-sm flex gap-2 items-center text-neutral-700 dark:text-white/90 mt-1">
                         <CircleUser size={18} />
 
                         {l.userJob === "RETURN" ? (
@@ -765,8 +809,8 @@ export default function ProductsPage() {
                       </div>
 
                       {l.comment ? (
-                        <div className="text-sm opacity-85 mt-2">
-                          <div className="border border-white/15 bg-white/5 rounded-xl p-3 flex gap-2 items-start">
+                        <div className="text-sm mt-2">
+                          <div className="border rounded-xl p-3 flex gap-2 items-start bg-white border-black/10 text-neutral-800 dark:border-white/15 dark:bg-white/5 dark:text-white/85">
                             <MessageCircle className="mt-0.5" size={18} />
                             <div className="leading-snug">{l.comment}</div>
                           </div>
@@ -788,7 +832,7 @@ export default function ProductsPage() {
                           fromPerson: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       placeholder="Напр: Маджид"
                     />
                   </Field>
@@ -802,7 +846,7 @@ export default function ProductsPage() {
                           toPerson: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       placeholder="Напр: Али"
                     />
                   </Field>
@@ -815,7 +859,7 @@ export default function ProductsPage() {
                       onChange={(e) =>
                         setLogForm((p) => ({ ...p, qty: e.target.value }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       inputMode="decimal"
                     />
                   </Field>
@@ -829,7 +873,7 @@ export default function ProductsPage() {
                           comment: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       placeholder="Напр: для объекта №12"
                     />
                   </Field>
@@ -840,7 +884,7 @@ export default function ProductsPage() {
                     type="button"
                     disabled={logSaving}
                     onClick={issue}
-                    className="px-4 py-3 md:py-2 rounded-xl bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2 font-semibold w-full md:w-auto"
+                    className="px-4 py-3 md:py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 flex items-center justify-center gap-2 font-semibold w-full md:w-auto"
                   >
                     <Send size={18} />
                     {logSaving ? "..." : "Выдать"}
@@ -859,7 +903,7 @@ export default function ProductsPage() {
                           fromPerson: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       placeholder="Напр: Маджид"
                     />
                   </Field>
@@ -870,7 +914,7 @@ export default function ProductsPage() {
                       onChange={(e) =>
                         setLogForm((p) => ({ ...p, toPerson: e.target.value }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       placeholder="Поставщик / водитель"
                     />
                   </Field>
@@ -883,7 +927,7 @@ export default function ProductsPage() {
                       onChange={(e) =>
                         setLogForm((p) => ({ ...p, qty: e.target.value }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       inputMode="decimal"
                     />
                   </Field>
@@ -897,7 +941,7 @@ export default function ProductsPage() {
                           comment: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 outline-none"
+                      className={inputClass}
                       placeholder="Напр: накладная №..."
                     />
                   </Field>
@@ -908,7 +952,7 @@ export default function ProductsPage() {
                     type="button"
                     disabled={logSaving}
                     onClick={receive}
-                    className="px-4 py-3 md:py-2 rounded-xl bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2 font-semibold w-full md:w-auto"
+                    className="px-4 py-3 md:py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 flex items-center justify-center gap-2 font-semibold w-full md:w-auto"
                   >
                     <CirclePlus size={18} />
                     {logSaving ? "..." : "Приход"}
@@ -920,13 +964,17 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Bottom bar (mobile only) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-black/70 backdrop-blur-xl border-t border-white/10 px-4 py-3">
+      {/* Bottom bar mobile */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden backdrop-blur-xl border-t px-4 py-3
+        bg-white/90 border-black/10
+        dark:bg-black/70 dark:border-white/10"
+      >
         <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={openAdd}
-            className="py-3 rounded-xl bg-white text-black font-semibold"
+            className="py-3 rounded-xl bg-primary-600 text-white font-semibold"
           >
             + Товар
           </button>
@@ -935,7 +983,7 @@ export default function ProductsPage() {
             type="button"
             onClick={startVoice}
             disabled={listening}
-            className="py-3 rounded-xl bg-white/10 border border-white/20"
+            className={ghostBtnClass}
           >
             <div className="flex items-center justify-center gap-2">
               <Mic className={listening ? "animate-pulse" : ""} />
@@ -946,7 +994,7 @@ export default function ProductsPage() {
           <button
             type="button"
             onClick={logOut}
-            className="py-3 rounded-xl bg-white/10 border border-white/20"
+            className={ghostBtnClass}
           >
             <div className="flex items-center justify-center gap-2">
               <LogOut size={18} />

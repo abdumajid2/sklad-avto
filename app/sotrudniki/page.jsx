@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import {
   useAddSotrudnikMutation,
   useGetSotrudnikiQuery,
+  useDeleteSotrudnikMutation,
 } from "@/store/services/sotrudnikiApi";
 
 function extFromName(name = "") {
@@ -37,10 +38,14 @@ async function uploadAvatar(file) {
 export default function SotrudnikiPage() {
   const { data = [], isLoading, error } = useGetSotrudnikiQuery();
   const [addSotrudnik, { isLoading: adding }] = useAddSotrudnikMutation();
+  const [deleteSotrudnik] = useDeleteSotrudnikMutation();
 
   const [form, setForm] = useState({ name: "", job: "", age: "" });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ name: "", job: "", age: "" });
+  const [saveStatus, setSaveStatus] = useState("");
 
   const save = async () => {
     if (!form.name.trim()) return alert("Введите имя");
@@ -68,6 +73,39 @@ export default function SotrudnikiPage() {
       console.error(e);
       alert(e?.message || "Ошибка добавления");
     }
+  };
+
+  async function remove(id) {
+    if (confirm("Удалить сотрудника?")) {
+      try {
+        await deleteSotrudnik(id).unwrap();
+      } catch (e) {
+        console.error(e);
+        alert(e?.message || "Ошибка удаления");
+      }
+    }
+  }
+
+  const openEdit = (sotrudnik) => {
+    setEditingId(sotrudnik.id);
+    setEditForm({
+      name: sotrudnik.name,
+      job: sotrudnik.job,
+      age: sotrudnik.age || "",
+    });
+  };
+
+  const closeEdit = () => {
+    setEditingId(null);
+    setEditForm({ name: "", job: "", age: "" });
+    setSaveStatus("");
+  };
+
+  const handleSave = () => {
+    setSaveStatus("success");
+    setTimeout(() => {
+      closeEdit();
+    }, 1500);
   };
 
   return (
@@ -110,16 +148,25 @@ export default function SotrudnikiPage() {
 
         {preview ? (
           <div className="flex items-center gap-3 mt-1">
-            {/* preview можно обычным img */}
-            {/* <img
+            <Image
               src={preview}
               alt="preview"
-              className="w-16 h-16 rounded-full object-cover"
-            /> */}
+              width={64}
+              height={64}
+              className="rounded-full object-cover"
+            />
             <div className="text-sm opacity-80 truncate">{file?.name}</div>
+            <button
+              onClick={() => {
+                setFile(null);
+                setPreview("");
+              }}
+              className="text-sm opacity-80 hover:opacity-100"
+            >
+              Удалить
+            </button>
           </div>
         ) : null}
-
         <button
           onClick={save}
           disabled={adding}
@@ -141,33 +188,111 @@ export default function SotrudnikiPage() {
               className="p-4 flex items-center justify-between rounded-2xl bg-white/10 border border-white/20"
             >
               <div className="flex items-center gap-6">
-
-              {s.avatar ? (
-                <div className="mt-2">
-                  {/* Next/Image требует width/height */}
+                {s.avatar && typeof s.avatar === "string" ? (
                   <Image
                     src={s.avatar}
-                    alt={s.name}
+                    alt={s.name || "avatar"}
                     width={74}
                     height={74}
-                    className="rounded-full object-cover"
-                    />
+                    unoptimized
+                    className="rounded-full object-cover w-[74px] h-[74px]"
+                  />
+                ) : (
+                  <div className="w-[74px] h-[74px] rounded-full bg-gray-600 flex items-center justify-center text-white text-xl font-semibold">
+                    {s.name?.[0] || "?"}
+                  </div>
+                )}
+                <div className="font-semibold text-2xl">{s.name}</div>
+                <div className="text-sm opacity-80">
+                  Должность: {s.job || "-"}
                 </div>
-              ) : null}
-              <div className="font-semibold text-2xl">{s.name}</div>
-              <div className="text-sm opacity-80">Должность: {s.job || "-"}</div>
-              <div className="text-sm opacity-80">
-                ДР: {s.age ? new Date(s.age).toLocaleDateString() : "-"}
-              </div>
-              </div>
-                <div>
-                  <button className="px-4 py-2 rounded-xl bg-white/20 text-sm opacity-80 hover:bg-white/60 transition hover:text-black">
-                    Редактировать
-
-                  </button>
+                <div className="text-sm opacity-80">
+                  ДР: {s.age ? new Date(s.age).toLocaleDateString() : "-"}
                 </div>
+              </div>
+              <div>
+                <button
+                  onClick={() => openEdit(s)}
+                  className="px-4 py-2 rounded-xl bg-white/20 text-sm opacity-80 hover:bg-white/60 transition hover:text-black"
+                >
+                  Редактировать
+                </button>
+              </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Модалка редактирования */}
+      {editingId !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-white/20">
+            <h2 className="text-2xl font-bold mb-4 text-white">
+              Редактировать сотрудника
+            </h2>
+
+            {saveStatus === "success" && (
+              <div className="mb-4 p-3 rounded-xl bg-green-600/20 border border-green-600 text-green-400 text-sm flex items-center gap-2 animate-pulse">
+                <span>✓</span> Сохранено успешно!
+              </div>
+            )}
+
+            <div className="grid gap-3 mb-4">
+              <input
+                type="text"
+                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                placeholder="Имя"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, name: e.target.value }))
+                }
+              />
+
+              <input
+                type="text"
+                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                placeholder="Должность"
+                value={editForm.job}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, job: e.target.value }))
+                }
+              />
+
+              <input
+                type="date"
+                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                value={editForm.age}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, age: e.target.value }))
+                }
+              />
+              <button
+                onClick={() => {
+                  remove(editingId);
+                  closeEdit();
+                }}
+                className="px-4 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+              >
+                Удалить сотрудника
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={closeEdit}
+                className="flex-1 px-4 py-2 rounded-xl bg-white/20 text-white hover:bg-white/30 transition"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saveStatus === "success"}
+                className="flex-1 px-4 py-2 rounded-xl bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50"
+              >
+                {saveStatus === "success" ? "✓ Сохранено" : "Сохранить"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

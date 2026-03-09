@@ -19,6 +19,18 @@ export const sotrudnikiApi = createApi({
       providesTags: ["Sotrudniki"],
     }),
 
+    deleteSotrudnik: builder.mutation({
+      queryFn: async (id) => {
+        const { error } = await supabase
+          .from("sotrudniki")
+          .delete()
+          .eq("id", id);
+        if (error) return { error: { message: error.message } };
+        return { data: { id } };
+      },
+      invalidatesTags: ["Sotrudniki"],
+    }),
+
     addSotrudnik: builder.mutation({
       queryFn: async (newSotrudnik) => {
         const { data, error } = await supabase
@@ -26,7 +38,6 @@ export const sotrudnikiApi = createApi({
           .insert([newSotrudnik]) // ✅ массив
           .select("id,name,age,job,created_at,avatar")
           .single();
-          
 
         if (error) return { error: { message: error.message } };
         return { data };
@@ -36,4 +47,8 @@ export const sotrudnikiApi = createApi({
   }),
 });
 
-export const { useGetSotrudnikiQuery, useAddSotrudnikMutation } = sotrudnikiApi;
+export const {
+  useGetSotrudnikiQuery,
+  useAddSotrudnikMutation,
+  useDeleteSotrudnikMutation,
+} = sotrudnikiApi;

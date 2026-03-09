@@ -1,11 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-   images: {
+  images: {
     remotePatterns: [
-      { protocol: "https", hostname: "i.pravatar.cc" },
-      { protocol: "https", hostname: "**.supabase.co" },
+      {
+        protocol: "https",
+        hostname: "afgbffuzytuqcwvmeywn.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
 };
