@@ -52,7 +52,7 @@ const makeIssueMessage = ({ product, qty, toPerson, fromPerson, comment }) => {
     `📦 Товар: <b>${esc(product?.name)}</b>\n` +
     `🔖 Код: <b>${esc(product?.code)}</b>\n` +
     `📍 Место: <b>Зона ${esc(product?.zona)} / Ряд ${esc(
-      product?.ryad
+      product?.ryad,
     )} / Поз ${esc(product?.pozisiya)}</b>\n` +
     `➖ Кол-во: <b>${esc(qty)}</b>\n` +
     `👤 Брал: <b>${esc(toPerson)}</b>\n` +
@@ -70,7 +70,7 @@ const makeReturnMessage = ({ product, qty, fromPerson, toPerson, comment }) => {
     `📦 Товар: <b>${esc(product?.name)}</b>\n` +
     `🔖 Код: <b>${esc(product?.code)}</b>\n` +
     `📍 Место: <b>Зона ${esc(product?.zona)} / Ряд ${esc(
-      product?.ryad
+      product?.ryad,
     )} / Поз ${esc(product?.pozisiya)}</b>\n` +
     `➕ Кол-во: <b>${esc(qty)}</b>\n` +
     (fromPerson?.trim() ? `👤 Принял: <b>${esc(fromPerson)}</b>\n` : "") +
@@ -151,7 +151,7 @@ export default function ProductsPage() {
     actionProduct?.id,
     {
       skip: !actionProduct,
-    }
+    },
   );
   const [addLog, { isLoading: logSaving }] = useAddLogMutation();
 
@@ -171,7 +171,7 @@ export default function ProductsPage() {
   // zones list
   const zones = useMemo(() => {
     const set = new Set(
-      data.map((p) => String(p.zona || "").trim()).filter(Boolean)
+      data.map((p) => String(p.zona || "").trim()).filter(Boolean),
     );
     return ["ALL", ...Array.from(set)];
   }, [data]);
@@ -184,20 +184,32 @@ export default function ProductsPage() {
       .filter((p) => {
         if (!s) return true;
         return (
-          String(p.code || "").toLowerCase().includes(s) ||
-          String(p.name || "").toLowerCase().includes(s)
+          String(p.code || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(p.name || "")
+            .toLowerCase()
+            .includes(s)
         );
       });
   }, [data, q, zona]);
 
   const logOut = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
-    } catch (e) {
-      console.error("Logout error:", e);
-    }
-  };
+  try {
+    localStorage.removeItem("session");
+
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    window.location.replace("/login");
+  } catch (e) {
+    console.error("Logout error:", e);
+    localStorage.removeItem("session");
+    window.location.replace("/login");
+  }
+};
 
   const tgNotify = async (text, chatId) => {
     try {
@@ -256,7 +268,7 @@ export default function ProductsPage() {
       ryad: String(form.ryad ?? "").trim(),
       pozisiya: String(form.pozisiya ?? "").trim(),
       quant: Number(String(form.quant ?? "0").replace(",", ".") || 0).toFixed(
-        2
+        2,
       ),
     };
 
@@ -417,19 +429,11 @@ export default function ProductsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className={`p-6 ${pageText}`}>
-        Загрузка...
-      </div>
-    );
+    return <div className={`p-6 ${pageText}`}>Загрузка...</div>;
   }
 
   if (isError) {
-    return (
-      <div className={`p-6 ${pageText}`}>
-        Ошибка загрузки
-      </div>
-    );
+    return <div className={`p-6 ${pageText}`}>Ошибка загрузки</div>;
   }
 
   return (
@@ -491,11 +495,7 @@ export default function ProductsPage() {
               + Добавить
             </button>
 
-            <button
-              type="button"
-              onClick={logOut}
-              className={ghostBtnClass}
-            >
+            <button type="button" onClick={logOut} className={ghostBtnClass}>
               <span className="flex items-center gap-2">
                 <LogOut size={18} />
                 Выйти
@@ -520,14 +520,16 @@ export default function ProductsPage() {
               {/* Mobile compact info */}
               <div className="mt-2 md:hidden grid grid-cols-2 gap-2 text-sm text-neutral-700 dark:text-white/90">
                 <div>
-                  Code: <b className="text-neutral-900 dark:text-white">{p.code}</b>
+                  Code:{" "}
+                  <b className="text-neutral-900 dark:text-white">{p.code}</b>
                 </div>
                 <div>
                   Кол-во:{" "}
                   <b className="text-neutral-900 dark:text-white">{p.quant}</b>
                 </div>
                 <div>
-                  Zona: <b className="text-neutral-900 dark:text-white">{p.zona}</b>
+                  Zona:{" "}
+                  <b className="text-neutral-900 dark:text-white">{p.zona}</b>
                 </div>
                 <div>
                   {p.ryad}/{p.pozisiya}
@@ -537,16 +539,28 @@ export default function ProductsPage() {
               {/* Desktop info */}
               <div className="hidden md:flex text-sm flex-wrap gap-4 items-center mt-2 text-neutral-600 dark:text-white/80">
                 <p>
-                  Code: <span className="font-bold text-neutral-900 dark:text-white">{p.code}</span>
+                  Code:{" "}
+                  <span className="font-bold text-neutral-900 dark:text-white">
+                    {p.code}
+                  </span>
                 </p>
                 <p>
-                  Zona: <span className="font-bold text-neutral-900 dark:text-white">{p.zona}</span>
+                  Zona:{" "}
+                  <span className="font-bold text-neutral-900 dark:text-white">
+                    {p.zona}
+                  </span>
                 </p>
                 <p>
-                  Ryad: <span className="font-bold text-neutral-900 dark:text-white">{p.ryad}</span>
+                  Ryad:{" "}
+                  <span className="font-bold text-neutral-900 dark:text-white">
+                    {p.ryad}
+                  </span>
                 </p>
                 <p>
-                  Poz: <span className="font-bold text-neutral-900 dark:text-white">{p.pozisiya}</span>
+                  Poz:{" "}
+                  <span className="font-bold text-neutral-900 dark:text-white">
+                    {p.pozisiya}
+                  </span>
                 </p>
                 <p>
                   Кол-во:{" "}
@@ -596,7 +610,9 @@ export default function ProductsPage() {
           <div
             className={`${modalClass} max-w-[520px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto p-5`}
           >
-            <div className={`flex items-center justify-between mb-4 ${stickyHeadClass}`}>
+            <div
+              className={`flex items-center justify-between mb-4 ${stickyHeadClass}`}
+            >
               <h2 className="text-lg font-semibold">
                 {mode === "add" ? "Добавить товар" : "Редактировать товар"}
               </h2>
@@ -697,14 +713,22 @@ export default function ProductsPage() {
           <div
             className={`${modalClass} max-w-[720px] md:rounded-2xl rounded-none md:h-auto h-[100dvh] md:max-h-[90vh] overflow-auto p-5`}
           >
-            <div className={`flex items-start md:items-center justify-between mb-3 ${stickyHeadClass}`}>
+            <div
+              className={`flex items-start md:items-center justify-between mb-3 ${stickyHeadClass}`}
+            >
               <div className="min-w-0">
                 <div className="text-lg font-semibold truncate">
                   {actionProduct.name}
                 </div>
                 <div className="text-sm text-neutral-600 dark:text-white/80">
-                  code: <b className="text-neutral-900 dark:text-white">{actionProduct.code}</b> • остаток:{" "}
-                  <b className="text-neutral-900 dark:text-white">{actionProduct.quant}</b>
+                  code:{" "}
+                  <b className="text-neutral-900 dark:text-white">
+                    {actionProduct.code}
+                  </b>{" "}
+                  • остаток:{" "}
+                  <b className="text-neutral-900 dark:text-white">
+                    {actionProduct.quant}
+                  </b>
                 </div>
               </div>
 
@@ -757,17 +781,30 @@ export default function ProductsPage() {
                         <div className="font-semibold flex items-center gap-2">
                           {l.userJob === "ISSUE" ? (
                             <>
-                              <Send size={22} className="text-neutral-500 dark:text-white/80" />
-                              <span className="text-red-500 dark:text-red-400">Выдача</span>
+                              <Send
+                                size={22}
+                                className="text-neutral-500 dark:text-white/80"
+                              />
+                              <span className="text-red-500 dark:text-red-400">
+                                Выдача
+                              </span>
                             </>
                           ) : l.userJob === "RETURN" ? (
                             <>
-                              <PackagePlus size={22} className="text-neutral-500 dark:text-white/80" />
-                              <span className="text-green-600 dark:text-green-400">Приход</span>
+                              <PackagePlus
+                                size={22}
+                                className="text-neutral-500 dark:text-white/80"
+                              />
+                              <span className="text-green-600 dark:text-green-400">
+                                Приход
+                              </span>
                             </>
                           ) : (
                             <>
-                              <FileText size={22} className="text-neutral-500 dark:text-white/80" />
+                              <FileText
+                                size={22}
+                                className="text-neutral-500 dark:text-white/80"
+                              />
                               <span>Запись</span>
                             </>
                           )}
@@ -991,11 +1028,7 @@ export default function ProductsPage() {
             </div>
           </button>
 
-          <button
-            type="button"
-            onClick={logOut}
-            className={ghostBtnClass}
-          >
+          <button type="button" onClick={logOut} className={ghostBtnClass}>
             <div className="flex items-center justify-center gap-2">
               <LogOut size={18} />
               Выйти
