@@ -10,7 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ru">
-      <body className="bg-linear-to-br from-neutral-900 via-neutral-850 to-neutral-900 p-0 md:p-4">
+      <body className="p-5">
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>

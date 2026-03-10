@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
@@ -8,6 +8,7 @@ import {
   useAddSotrudnikMutation,
   useGetSotrudnikiQuery,
   useDeleteSotrudnikMutation,
+  useUpdateSotrudnikMutation,
 } from "@/store/services/sotrudnikiApi";
 
 function extFromName(name = "") {
@@ -37,15 +38,34 @@ async function uploadAvatar(file) {
 
 export default function SotrudnikiPage() {
   const { data = [], isLoading, error } = useGetSotrudnikiQuery();
+
   const [addSotrudnik, { isLoading: adding }] = useAddSotrudnikMutation();
+  const [updateSotrudnik, { isLoading: updating }] =
+    useUpdateSotrudnikMutation();
   const [deleteSotrudnik] = useDeleteSotrudnikMutation();
 
   const [form, setForm] = useState({ name: "", job: "", age: "" });
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState("");
+  const [preview, setPreview] = useState(null);
+
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ name: "", job: "", age: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    job: "",
+    age: "",
+    avatar: "",
+  });
+
   const [saveStatus, setSaveStatus] = useState("");
+  const [editFile, setEditFile] = useState(null);
+  const [editPreview, setEditPreview] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+      if (editPreview) URL.revokeObjectURL(editPreview);
+    };
+  }, [preview, editPreview]);
 
   const save = async () => {
     if (!form.name.trim()) return alert("Введите имя");
@@ -54,7 +74,6 @@ export default function SotrudnikiPage() {
     try {
       let avatarUrl = null;
 
-      // если выбрали файл — грузим в Supabase Storage
       if (file) {
         avatarUrl = await uploadAvatar(file);
       }
@@ -62,13 +81,15 @@ export default function SotrudnikiPage() {
       await addSotrudnik({
         name: form.name.trim(),
         job: form.job.trim(),
-        age: form.age || null, // "YYYY-MM-DD"
-        avatar: avatarUrl, // ссылка на фото из Storage
+        age: form.age || null,
+        avatar: avatarUrl,
       }).unwrap();
+
+      if (preview) URL.revokeObjectURL(preview);
 
       setForm({ name: "", job: "", age: "" });
       setFile(null);
-      setPreview("");
+      setPreview(null);
     } catch (e) {
       console.error(e);
       alert(e?.message || "Ошибка добавления");
@@ -89,28 +110,60 @@ export default function SotrudnikiPage() {
   const openEdit = (sotrudnik) => {
     setEditingId(sotrudnik.id);
     setEditForm({
-      name: sotrudnik.name,
-      job: sotrudnik.job,
+      name: sotrudnik.name || "",
+      job: sotrudnik.job || "",
       age: sotrudnik.age || "",
+      avatar: sotrudnik.avatar || "",
     });
-  };
-
-  const closeEdit = () => {
-    setEditingId(null);
-    setEditForm({ name: "", job: "", age: "" });
+    setEditFile(null);
+    setEditPreview(null);
     setSaveStatus("");
   };
 
-  const handleSave = () => {
-    setSaveStatus("success");
-    setTimeout(() => {
-      closeEdit();
-    }, 1500);
+  const closeEdit = () => {
+    if (editPreview) URL.revokeObjectURL(editPreview);
+    setEditingId(null);
+    setEditForm({ name: "", job: "", age: "", avatar: "" });
+    setEditFile(null);
+    setEditPreview(null);
+    setSaveStatus("");
+  };
+
+  const handleSave = async () => {
+    if (!editForm.name.trim()) return alert("Введите имя");
+    if (!editForm.job.trim()) return alert("Введите должность");
+
+    try {
+      let avatarUrl = editForm.avatar || null;
+
+      if (editFile) {
+        avatarUrl = await uploadAvatar(editFile);
+      }
+
+      await updateSotrudnik({
+        id: editingId,
+        name: editForm.name.trim(),
+        job: editForm.job.trim(),
+        age: editForm.age || null,
+        avatar: avatarUrl,
+      }).unwrap();
+
+      setSaveStatus("success");
+      setTimeout(() => {
+        closeEdit();
+      }, 1000);
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Ошибка сохранения");
+    }
   };
 
   return (
     <div className="p-4 text-white">
-      <Link href="/">На главную</Link>
+      <Link href="/products" className="inline-block mb-4 hover:underline">
+        Назад к товарам
+      </Link>
+
       <h1 className="text-3xl font-bold mb-4">Сотрудники</h1>
 
       <div className="grid gap-2 max-w-md mb-6">
@@ -141,25 +194,27 @@ export default function SotrudnikiPage() {
           className="px-3 py-2 rounded-xl bg-white/10 border border-white/20"
           onChange={(e) => {
             const f = e.target.files?.[0] || null;
+
+            if (preview) URL.revokeObjectURL(preview);
+
             setFile(f);
-            setPreview(f ? URL.createObjectURL(f) : "");
+            setPreview(f ? URL.createObjectURL(f) : null);
           }}
         />
 
         {preview ? (
           <div className="flex items-center gap-3 mt-1">
-            <Image
+            <img
               src={preview}
               alt="preview"
-              width={64}
-              height={64}
-              className="rounded-full object-cover"
+              className="w-16 h-16 rounded-full object-cover"
             />
             <div className="text-sm opacity-80 truncate">{file?.name}</div>
             <button
               onClick={() => {
+                if (preview) URL.revokeObjectURL(preview);
                 setFile(null);
-                setPreview("");
+                setPreview(null);
               }}
               className="text-sm opacity-80 hover:opacity-100"
             >
@@ -167,6 +222,7 @@ export default function SotrudnikiPage() {
             </button>
           </div>
         ) : null}
+
         <button
           onClick={save}
           disabled={adding}
@@ -202,14 +258,18 @@ export default function SotrudnikiPage() {
                     {s.name?.[0] || "?"}
                   </div>
                 )}
-                <div className="font-semibold text-2xl">{s.name}</div>
-                <div className="text-sm opacity-80">
-                  Должность: {s.job || "-"}
-                </div>
-                <div className="text-sm opacity-80">
-                  ДР: {s.age ? new Date(s.age).toLocaleDateString() : "-"}
+
+                <div>
+                  <div className="font-semibold text-2xl">{s.name}</div>
+                  <div className="text-sm opacity-80">
+                    Должность: {s.job || "-"}
+                  </div>
+                  <div className="text-sm opacity-80">
+                    ДР: {s.age ? new Date(s.age).toLocaleDateString() : "-"}
+                  </div>
                 </div>
               </div>
+
               <div>
                 <button
                   onClick={() => openEdit(s)}
@@ -223,7 +283,6 @@ export default function SotrudnikiPage() {
         </div>
       )}
 
-      {/* Модалка редактирования */}
       {editingId !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-white/20">
@@ -266,6 +325,43 @@ export default function SotrudnikiPage() {
                   setEditForm((p) => ({ ...p, age: e.target.value }))
                 }
               />
+
+              <input
+                type="file"
+                accept="image/*"
+                className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+
+                  if (editPreview) URL.revokeObjectURL(editPreview);
+
+                  setEditFile(f);
+                  setEditPreview(f ? URL.createObjectURL(f) : null);
+                }}
+              />
+
+              {editPreview ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={editPreview}
+                    alt="edit preview"
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <div className="text-sm opacity-80 truncate">
+                    {editFile?.name}
+                  </div>
+                </div>
+              ) : editForm.avatar ? (
+                <Image
+                  src={editForm.avatar}
+                  alt="current avatar"
+                  width={64}
+                  height={64}
+                  unoptimized
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+              ) : null}
+
               <button
                 onClick={() => {
                   remove(editingId);
@@ -286,10 +382,10 @@ export default function SotrudnikiPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saveStatus === "success"}
+                disabled={updating || saveStatus === "success"}
                 className="flex-1 px-4 py-2 rounded-xl bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50"
               >
-                {saveStatus === "success" ? "✓ Сохранено" : "Сохранить"}
+                {updating ? "Сохранение..." : saveStatus === "success" ? "✓ Сохранено" : "Сохранить"}
               </button>
             </div>
           </div>

@@ -7,7 +7,6 @@ import AuthGuard from "./AuthGuard";
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
-
   const isLoginPage = pathname === "/login";
 
   if (isLoginPage) {
@@ -31,21 +30,15 @@ export default function AppShell({ children }) {
 
   return (
     <AuthGuard>
-      <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-32px)] md:rounded-2xl overflow-hidden shadow-2xl">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-        />
-        <div className="absolute inset-0 bg-linear-to-br from-black/50 via-black/40 to-black/50" />
-        <div className="absolute inset-0 backdrop-blur-sm" />
-
-        <div className="relative z-10 flex flex-col h-full">
           <Header />
-          <main className="flex-1 overflow-auto px-3 md:px-6 py-4">
+          <div className="min-h-[80dvh] md:w-460 mx-auto p-4">
+
             {children}
-          </main>
+          </div>
+         
           <Footer />
-        </div>
-      </div>
+       
+  
     </AuthGuard>
   );
 }

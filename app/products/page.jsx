@@ -510,7 +510,7 @@ export default function ProductsPage() {
         {filtered.map((p) => (
           <div
             key={p.id}
-            className={`p-4 rounded-2xl w-80 md:w-440 mx-auto flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3 ${panelClass}`}
+            className={`p-4 rounded-2xl md:w-460 flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3 ${panelClass}`}
           >
             <div className="min-w-0">
               <div className="font-semibold truncate text-base md:text-lg">

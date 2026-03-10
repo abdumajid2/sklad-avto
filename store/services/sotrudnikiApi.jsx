@@ -10,7 +10,7 @@ export const sotrudnikiApi = createApi({
       queryFn: async () => {
         const { data, error } = await supabase
           .from("sotrudniki")
-          .select("id,name,age,job,created_at,avatar")
+          .select("id, name, age, job, created_at, avatar")
           .order("created_at", { ascending: false });
 
         if (error) return { error: { message: error.message } };
@@ -19,30 +19,46 @@ export const sotrudnikiApi = createApi({
       providesTags: ["Sotrudniki"],
     }),
 
+    addSotrudnik: builder.mutation({
+      queryFn: async (newSotrudnik) => {
+        const { data, error } = await supabase
+          .from("sotrudniki")
+          .insert([newSotrudnik])
+          .select("id, name, age, job, created_at, avatar")
+          .single();
+
+        if (error) return { error: { message: error.message } };
+        return { data };
+      },
+      invalidatesTags: ["Sotrudniki"],
+    }),
+
+    updateSotrudnik: builder.mutation({
+      queryFn: async ({ id, ...payload }) => {
+        const { data, error } = await supabase
+          .from("sotrudniki")
+          .update(payload)
+          .eq("id", id)
+          .select("id, name, age, job, created_at, avatar")
+          .single();
+
+        if (error) return { error: { message: error.message } };
+        return { data };
+      },
+      invalidatesTags: ["Sotrudniki"],
+    }),
+
     deleteSotrudnik: builder.mutation({
       queryFn: async (id) => {
         const { error } = await supabase
           .from("sotrudniki")
           .delete()
           .eq("id", id);
+
         if (error) return { error: { message: error.message } };
         return { data: { id } };
       },
       invalidatesTags: ["Sotrudniki"],
-    }),
-
-    addSotrudnik: builder.mutation({
-      queryFn: async (newSotrudnik) => {
-        const { data, error } = await supabase
-          .from("sotrudniki")
-          .insert([newSotrudnik]) // ✅ массив
-          .select("id,name,age,job,created_at,avatar")
-          .single();
-
-        if (error) return { error: { message: error.message } };
-        return { data };
-      },
-      invalidatesTags: ["Sotrudniki"], // ✅ авто-обновление списка
     }),
   }),
 });
@@ -50,5 +66,6 @@ export const sotrudnikiApi = createApi({
 export const {
   useGetSotrudnikiQuery,
   useAddSotrudnikMutation,
+  useUpdateSotrudnikMutation,
   useDeleteSotrudnikMutation,
 } = sotrudnikiApi;
