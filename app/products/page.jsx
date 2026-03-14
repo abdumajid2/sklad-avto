@@ -506,11 +506,11 @@ export default function ProductsPage() {
       </div>
 
       {/* List */}
-      <div className="grid gap-6 items-center justify-center">
+      <div className="grid gap-6 items-center justify-center p-5 m-5">
         {filtered.map((p) => (
           <div
             key={p.id}
-            className={`p-4 rounded-2xl w-90 md:w-460 flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3 ${panelClass}`}
+            className={`p-4 rounded-2xl w-90 md:w-screen flex flex-col justify-center md:flex-row md:items-center md:justify-between gap-3 ${panelClass}`}
           >
             <div className="min-w-0">
               <div className="font-semibold truncate text-base md:text-lg">
