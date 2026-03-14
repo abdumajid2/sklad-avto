@@ -537,7 +537,7 @@ export default function ProductsPage() {
               </div>
 
               {/* Desktop info */}
-              <div className="hidden md:flex text-sm flex-wrap gap-4 items-center mt-2 text-neutral-600 dark:text-white/80">
+              <div className="hidden md:flex md:w-400 text-sm flex-wrap gap-4 items-center mt-2 text-neutral-600 dark:text-white/80">
                 <p>
                   Code:{" "}
                   <span className="font-bold text-neutral-900 dark:text-white">
